@@ -26,7 +26,8 @@ where
         + ops::Sub<Output = NumType>
         + ops::SubAssign
         + num_traits::identities::Zero
-        + num_traits::One,
+        + num_traits::One
+        + num_traits::real::Real,
     nalgebra::Vector3<NumType>: ops::Mul<
             NumType,
             Output = nalgebra::Matrix<
@@ -48,6 +49,29 @@ where
             omega.cross(&self.rot_mat.column(1)),
             omega.cross(&self.rot_mat.column(0)),
         ]) * delta_time.clone();
+        //Reorthonormalize
+        let rot_mat_x = self.rot_mat.column(0);
+        let rot_mat_x = &rot_mat_x
+            * (NumType::one()
+                / (rot_mat_x.x * rot_mat_x.x
+                    + rot_mat_x.y * rot_mat_x.y
+                    + rot_mat_x.z * rot_mat_x.z)
+                    .sqrt());
+        let rot_mat_y = self.rot_mat.column(2).cross(&self.rot_mat.column(0));
+        let rot_mat_y = &rot_mat_y
+            * (NumType::one()
+                / (rot_mat_y.x * rot_mat_y.x
+                    + rot_mat_y.y * rot_mat_y.y
+                    + rot_mat_y.z * rot_mat_y.z)
+                    .sqrt());
+        let rot_mat_z = self.rot_mat.column(0).cross(&self.rot_mat.column(1));
+        let rot_mat_z = &rot_mat_z
+            * (NumType::one()
+                / (rot_mat_z.x * rot_mat_z.x
+                    + rot_mat_z.y * rot_mat_z.y
+                    + rot_mat_z.z * rot_mat_z.z)
+                    .sqrt());
+        self.rot_mat = nalgebra::Matrix3::from_columns(&[rot_mat_x, rot_mat_y, rot_mat_z]);
 
         self.pos += self.lin_vel.clone() * delta_time;
     }
